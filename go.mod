@@ -4,6 +4,7 @@ go 1.11
 
 require (
 	bazil.org/fuse v0.0.0-20200117165640-742914fa44b8
+	github.com/bbengfort/x v0.0.0-20200707133032-4b95decd19e6
 	github.com/boltdb/bolt v1.3.1
 	github.com/claudetech/loggo v0.0.0-20150602092109-9fe141f12392
 	github.com/mattn/go-colorable v0.1.4 // indirect
