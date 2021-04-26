@@ -36,7 +36,7 @@ type Client struct {
 }
 
 // NewClient creates a new Google Drive client
-func NewClient(config *config.Config, cache *Cache, refreshInterval time.Duration, rootNodeID string, driveID string) (*Client, error) {
+func NewClient(config *config.Config, cache *Cache, rootNodeID string, driveID string) (*Client, error) {
 	client := Client{
 		cache:   cache,
 		context: context.Background(),
@@ -66,17 +66,14 @@ func NewClient(config *config.Config, cache *Cache, refreshInterval time.Duratio
 		return nil, err
 	}
 
-	go client.startWatchChanges(refreshInterval)
+	go client.startWatchChanges()
 
 	return &client, nil
 }
 
-func (d *Client) startWatchChanges(refreshInterval time.Duration) {
+func (d *Client) startWatchChanges() {
 	d.checkChanges(true)
 	go d.startSignalHandler() // we don't want a race cond here, don't move to NewClient
-	for _ = range time.Tick(refreshInterval) {
-		d.checkChanges(false)
-	}
 }
 
 func (d *Client) startSignalHandler() {

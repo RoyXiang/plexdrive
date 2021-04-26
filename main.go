@@ -7,8 +7,6 @@ import (
 	"path/filepath"
 	"strconv"
 
-	"time"
-
 	"strings"
 
 	"syscall"
@@ -56,7 +54,6 @@ func main() {
 	argChunkCheckThreads := flag.Int("chunk-check-threads", max(runtime.NumCPU()/2, 1), "The number of threads to use for checking chunk existence")
 	argChunkLoadAhead := flag.Int("chunk-load-ahead", max(runtime.NumCPU()-1, 1), "The number of chunks that should be read ahead")
 	argMaxChunks := flag.Int("max-chunks", runtime.NumCPU()*2, "The maximum number of chunks to be stored in memory")
-	argRefreshInterval := flag.Duration("refresh-interval", 1*time.Minute, "The time to wait till checking for changes")
 	argMountOptions := flag.StringP("fuse-options", "o", "", "Fuse mount options (e.g. --fuse-options allow_other,direct_io,...)")
 	argVersion := flag.Bool("version", false, "Displays program's version information")
 	argUID := flag.Int64("uid", -1, "Set the mounts UID (-1 = default permissions)")
@@ -142,7 +139,6 @@ func main() {
 		Log.Debugf("chunk-check-threads  : %v", *argChunkCheckThreads)
 		Log.Debugf("chunk-load-ahead     : %v", *argChunkLoadAhead)
 		Log.Debugf("max-chunks           : %v", *argMaxChunks)
-		Log.Debugf("refresh-interval     : %v", *argRefreshInterval)
 		Log.Debugf("fuse-options         : %v", *argMountOptions)
 		Log.Debugf("UID                  : %v", uid)
 		Log.Debugf("GID                  : %v", gid)
@@ -197,7 +193,7 @@ func main() {
 		}
 		defer cache.Close()
 
-		client, err := drive.NewClient(cfg, cache, *argRefreshInterval, *argRootNodeID, *argDriveID)
+		client, err := drive.NewClient(cfg, cache, *argRootNodeID, *argDriveID)
 		if nil != err {
 			Log.Errorf("%v", err)
 			os.Exit(4)
