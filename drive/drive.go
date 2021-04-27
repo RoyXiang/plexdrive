@@ -14,6 +14,7 @@ import (
 	"golang.org/x/oauth2"
 	gdrive "google.golang.org/api/drive/v3"
 	"google.golang.org/api/googleapi"
+	"google.golang.org/api/option"
 )
 
 // Fields are the fields that should be returned by the Google Drive API
@@ -223,7 +224,7 @@ func getTokenFromWeb(config *oauth2.Config) (*oauth2.Token, error) {
 		return nil, fmt.Errorf("Unable to read authorization code %v", err)
 	}
 
-	tok, err := config.Exchange(oauth2.NoContext, code)
+	tok, err := config.Exchange(context.TODO(), code)
 	if err != nil {
 		return nil, fmt.Errorf("Unable to retrieve token from web %v", err)
 	}
@@ -232,7 +233,7 @@ func getTokenFromWeb(config *oauth2.Config) (*oauth2.Token, error) {
 
 // getClient gets a new Google Drive client
 func (d *Client) getClient() (*gdrive.Service, error) {
-	return gdrive.New(d.config.Client(d.context, d.token))
+	return gdrive.NewService(d.context, option.WithHTTPClient(d.config.Client(d.context, d.token)))
 }
 
 // GetNativeClient gets a native http client

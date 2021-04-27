@@ -2,6 +2,7 @@ package mount
 
 import (
 	"os"
+	"syscall"
 
 	"fmt"
 
@@ -42,10 +43,7 @@ func Mount(
 	}
 
 	// Set mount options
-	options := []fuse.MountOption{
-		fuse.NoAppleDouble(),
-		fuse.NoAppleXattr(),
-	}
+	var options []fuse.MountOption
 	directIO := false
 	maxReadahead := uint32(128 << 10) // 128 KB is the FUSE default
 	for _, option := range mountOptions {
@@ -71,18 +69,11 @@ func Mount(
 			options = append(options, fuse.DefaultPermissions())
 		} else if "direct_io" == option {
 			directIO = true
-		} else if "excl_create" == option {
-			options = append(options, fuse.ExclCreate())
 		} else if strings.HasPrefix(option, "fs_name") {
 			data := strings.Split(option, "=")
 			options = append(options, fuse.FSName(data[1]))
-		} else if "local_volume" == option {
-			options = append(options, fuse.LocalVolume())
 		} else if "writeback_cache" == option {
 			options = append(options, fuse.WritebackCache())
-		} else if strings.HasPrefix(option, "volume_name") {
-			data := strings.Split(option, "=")
-			options = append(options, fuse.VolumeName(data[1]))
 		} else if "read_only" == option {
 			options = append(options, fuse.ReadOnly())
 		} else {
@@ -113,13 +104,6 @@ func Mount(
 	}
 	if err := fs.Serve(c, filesys); err != nil {
 		return err
-	}
-
-	// check if the mount process has an error to report
-	<-c.Ready
-	if err := c.MountError; nil != err {
-		Log.Debugf("%v", err)
-		return fmt.Errorf("Error mounting FUSE")
 	}
 
 	return Unmount(mountpoint, true)
@@ -194,11 +178,10 @@ func (o *Object) Attr(ctx context.Context, attr *fuse.Attr) error {
 		attr.Size = o.object.Size
 	}
 
-	attr.Uid = uint32(o.uid)
-	attr.Gid = uint32(o.gid)
+	attr.Uid = o.uid
+	attr.Gid = o.gid
 
 	attr.Mtime = o.object.LastModified
-	attr.Crtime = o.object.LastModified
 	attr.Ctime = o.object.LastModified
 
 	attr.Blocks = (attr.Size + 511) / 512
@@ -211,10 +194,10 @@ func (o *Object) ReadDirAll(ctx context.Context) ([]fuse.Dirent, error) {
 	objects, err := o.client.GetObjectsByParent(o.object.ObjectID)
 	if nil != err {
 		Log.Debugf("%v", err)
-		return nil, fuse.ENOENT
+		return nil, syscall.ENOENT
 	}
 
-	dirs := []fuse.Dirent{}
+	var dirs []fuse.Dirent
 	for _, object := range objects {
 		if object.IsDir {
 			dirs = append(dirs, fuse.Dirent{
@@ -236,7 +219,7 @@ func (o *Object) Lookup(ctx context.Context, name string) (fs.Node, error) {
 	object, err := o.client.GetObjectByParentAndName(o.object.ObjectID, name)
 	if nil != err {
 		Log.Tracef("%v", err)
-		return nil, fuse.ENOENT
+		return nil, syscall.ENOENT
 	}
 
 	return &Object{
@@ -255,7 +238,7 @@ func (o *Object) Read(ctx context.Context, req *fuse.ReadRequest, resp *fuse.Rea
 	data, err := o.chunkManager.GetChunk(o.object, req.Offset, int64(req.Size))
 	if nil != err {
 		Log.Warningf("%v", err)
-		return fuse.EIO
+		return syscall.EIO
 	}
 
 	resp.Data = data
@@ -276,13 +259,13 @@ func (o *Object) Remove(ctx context.Context, req *fuse.RemoveRequest) error {
 	obj, err := o.client.GetObjectByParentAndName(o.object.ObjectID, req.Name)
 	if nil != err {
 		Log.Warningf("%v", err)
-		return fuse.EIO
+		return syscall.EIO
 	}
 
 	err = o.client.Remove(obj, o.object.ObjectID)
 	if nil != err {
 		Log.Warningf("%v", err)
-		return fuse.EIO
+		return syscall.EIO
 	}
 
 	return nil
@@ -293,7 +276,7 @@ func (o *Object) Mkdir(ctx context.Context, req *fuse.MkdirRequest) (fs.Node, er
 	newObj, err := o.client.Mkdir(o.object.ObjectID, req.Name)
 	if nil != err {
 		Log.Warningf("%v", err)
-		return nil, fuse.EIO
+		return nil, syscall.EIO
 	}
 
 	return &Object{
@@ -310,19 +293,19 @@ func (o *Object) Rename(ctx context.Context, req *fuse.RenameRequest, newDir fs.
 	obj, err := o.client.GetObjectByParentAndName(o.object.ObjectID, req.OldName)
 	if nil != err {
 		Log.Warningf("%v", err)
-		return fuse.EIO
+		return syscall.EIO
 	}
 
 	destDir, ok := newDir.(*Object)
 	if !ok {
 		Log.Warningf("%v", err)
-		return fuse.EIO
+		return syscall.EIO
 	}
 
 	err = o.client.Rename(obj, o.object.ObjectID, destDir.object.ObjectID, req.NewName)
 	if nil != err {
 		Log.Warningf("%v", err)
-		return fuse.EIO
+		return syscall.EIO
 	}
 
 	return nil
