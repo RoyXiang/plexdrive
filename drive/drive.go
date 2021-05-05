@@ -143,7 +143,7 @@ func (d *Client) checkChanges(firstCheck bool) {
 			Log.Tracef("Change %v", change)
 			// ignore changes for changeType drive
 			if change.ChangeType != "file" {
-				Log.Warningf("Ignoring change type %v", change.ChangeType)
+				Log.Debugf("Ignoring change type %v", change.ChangeType)
 				continue
 			}
 
