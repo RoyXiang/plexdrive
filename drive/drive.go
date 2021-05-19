@@ -252,7 +252,7 @@ func (d *Client) GetFileById(id string) (*gdrive.File, error) {
 
 	file, err := client.Files.
 		Get(id).
-		Fields(googleapi.Field(fields)).
+		Fields(fields).
 		SupportsAllDrives(true).
 		Do()
 	if nil != err {
