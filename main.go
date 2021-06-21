@@ -15,7 +15,6 @@ import (
 
 	"runtime"
 
-	"github.com/bbengfort/x/pid"
 	"github.com/claudetech/loggo"
 	. "github.com/claudetech/loggo/default"
 	"github.com/plexdrive/plexdrive/chunk"
@@ -215,18 +214,6 @@ func main() {
 		if nil != err {
 			Log.Errorf("%v", err)
 			os.Exit(4)
-		}
-
-		// create pid file
-		pfile := pid.New(pid.Path("plexdrive.pid"))
-		defer func() {
-			if err := pfile.Free(); err != nil {
-				Log.Errorf("%v", err)
-			}
-		}()
-		if err := pfile.Save(); err != nil {
-			Log.Errorf("Could not create pid file")
-			os.Exit(6)
 		}
 
 		// check os signals like SIGINT/TERM
