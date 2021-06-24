@@ -13,7 +13,7 @@ require (
 	github.com/onsi/gomega v1.8.1 // indirect
 	github.com/spf13/pflag v1.0.5
 	golang.org/x/net v0.0.0-20210503060351-7fd8e65b6420
-	golang.org/x/oauth2 v0.0.0-20210514164344-f6687ab2804c
-	golang.org/x/sys v0.0.0-20210616045830-e2b7044e8c71
-	google.golang.org/api v0.48.0
+	golang.org/x/oauth2 v0.0.0-20210615190721-d04028783cf1
+	golang.org/x/sys v0.0.0-20210616094352-59db8d763f22
+	google.golang.org/api v0.49.0
 )
